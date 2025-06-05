@@ -6,16 +6,7 @@ for i in range(1,101):
     print("")
 world={
     "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
-    "area":[["P ","E ","E ","E ","E ","E ",],
-        ["E ","E ","E ","O ","E ","E ",],
-        ["E ","M ","E ","E ","E ","E ",],
-        ["E ","E ","E ","E ","E ","E ",],
-        ["E ","E ","E ","E ","E ","E ",],
-        ["E ","E ","E ","E ","E ","E ",]],
-    "coordinate":{"P ":[0,0],"M ":[2,1]},
-    "health":{"P ":100,"M ":5},
-    "inventory":{"P ":[],"M ":[]},
-    "equipped":{"P ":[1,6,2,1],"M ":[1,4,1.5,1]}}
+    "are,4,1.5,1]}}
 
 def move(lenght:list, who:str, coordinate:dict, area:dict):
         if coordinate[who][0]+lenght[0]>5:
@@ -30,12 +21,6 @@ def move(lenght:list, who:str, coordinate:dict, area:dict):
             return coordinate[who][0],coordinate[who][1],"Already occupied"
         return [coordinate[who][0]+lenght[0], coordinate[who][1]+lenght[1],""]
 
-def attack(weapon:list, health:int, armor:int):
-    return health-ceil((random()*weapon[1]+weapon[0]-1)/armor) 
-
-#assumes equal len
-def bitwise_add(list1:list, list2:list):
-    res=[]
     for i in range(0,len(list1)):
         res.append(list1[i]+list2[i])
     return res
