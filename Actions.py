@@ -1,5 +1,7 @@
 from random import random
 from math import ceil
+
+# Remember to write comments
 for i in range(1,101):
     print("")
 world={
