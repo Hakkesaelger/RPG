@@ -4,12 +4,12 @@ for i in range(1,101):
     print("")
 world={
     "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
-    "area":[["P ","E ","E ","E ","E ","E ",],
-        ["E ","E ","E ","O ","E ","E ",],
-        ["E ","M ","E ","E ","E ","E ",],
-        ["E ","E ","E ","E ","E ","E ",],
-        ["E ","E ","E ","E ","E ","E ",],
-        ["E ","E ","E ","E ","E ","E ",]],
+    "area":[["P ",". ",". ",". ",". ",". ",],
+        [". ",". ",". ","O ",". ",". ",],
+        [". ","M ",". ",". ",". ",". ",],
+        [". ",". ",". ",". ",". ",". ",],
+        [". ",". ",". ",". ",". ",". ",],
+        [". ",". ",". ",". ",". ",". ",]],
     "coordinate":{"P ":[0,0],"M ":[2,1]},
     "health":{"P ":100,"M ":5},
     "inventory":{"P ":[],"M ":[]},
@@ -24,7 +24,7 @@ def move(lenght:list, who:str, coordinate:dict, area:dict):
             return [0,coordinate[who][1]+lenght[1],"Out of bounds"]
         if coordinate[who][1]+lenght[1]<0:
             return [coordinate[who][0]+lenght[0],0,"Out of bounds"]
-        if (area[coordinate[who][0]+lenght[0]][coordinate[who][1]+lenght[1]]!="E "):
+        if (area[coordinate[who][0]+lenght[0]][coordinate[who][1]+lenght[1]]!=". "):
             return coordinate[who][0],coordinate[who][1],"Already occupied"
         return [coordinate[who][0]+lenght[0], coordinate[who][1]+lenght[1],""]
 
@@ -51,18 +51,18 @@ def action(game:dict, s:str,actor:str):
     if s in ["u","d","l","r"]:
         for i in range(0,equipped[actor][3]):
             t=move(dir[s],actor,coordinate,area)
-            area[coordinate[actor][0]][coordinate[actor][1]]="E "
+            area[coordinate[actor][0]][coordinate[actor][1]]=". "
             area[t[0]][t[1]]=actor
             coordinate[actor]=[t[0],t[1]]
             return {"print":t[2],"coordinate":coordinate,"area":area}
     elif s[0]=="a":
         t=bitwise_add(coordinate[actor], dir[s[2]])
         name=area[t[0]][t[1]]
-        if name in ["E ","O "]:
+        if name in [". ","O "]:
             return{"print":"No enemy to attack"}
         health[name]=attack(equipped[actor],health[name],equipped[name][2])
         if health[name]<=0:
-            area[t[0]][t[1]]="E "
+            area[t[0]][t[1]]=". "
             del coordinate[name]
             del health[name]
             del inventory[name]
@@ -70,7 +70,7 @@ def action(game:dict, s:str,actor:str):
             return {"print":"Enemy killed","area":area,"coordinate":coordinate,"health":health,"inventory":inventory,"equipped":equipped}
         return{"print":health[name],"health":health}
     else:
-        print("invalid action")
+        return {"print":"Invalid action"}
 
 while True:
     print(generate_board(world["area"]))
