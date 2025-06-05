@@ -1,6 +1,5 @@
 from random import random
 from math import ceil
-
 for i in range(1,101):
     print("")
 world={
@@ -48,18 +47,18 @@ def generate_board(list:list):
 
 
 def action(game:dict, s:str,actor:str):
-    dir,area,coordinate,health,inventory,equipped=game
-    if s=="u" or "d" or "l" or "r":
+    dir,area,coordinate,health,inventory,equipped=game.values()
+    if s in ["u","d","l","r"]:
         for i in range(0,equipped[actor][3]):
             t=move(dir[s],actor,coordinate,area)
             area[coordinate[actor][0]][coordinate[actor][1]]="E "
             area[t[0]][t[1]]=actor
             coordinate[actor]=[t[0],t[1]]
-            return {"error":t[3],"coordinate":coordinate,"area":area}
+            return {"print":t[2],"coordinate":coordinate,"area":area}
     elif s[0]=="a":
-        t=bitwise_add(coordinate[actor], dir(s[2]))
+        t=bitwise_add(coordinate[actor], dir[s[2]])
         name=area[t[0]][t[1]]
-        if name=="E " or "O ":
+        if name in ["E ","O "]:
             return{"print":"No enemy to attack"}
         health[name]=attack(equipped[actor],health[name],equipped[name][2])
         if health[name]<=0:
@@ -77,3 +76,8 @@ while True:
     print(generate_board(world["area"]))
     print("Make an action! Move Up, Down, Left, or Right, make an attack, pick up an item on the ground, or make an inventory interaction")
     s=input("u for up, d for down, l for left, r for right, a+the direction you're attacking in(u, d, l, or r) for attack, p for pick up, and i for inventory \n")
+    t=action(world,s,"P ")
+    print(t.pop("print"))
+    for i in world:
+        if i in t:
+            world[i]=t[i]
