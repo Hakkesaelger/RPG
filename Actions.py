@@ -1,26 +1,28 @@
+from Mob_ai import monster_movement
 from random import random
 from math import ceil
+from Utility import generate_board, bitwise_add
 for i in range(1,101):
     print("")
 world={
-    "Persons":{},
+    "persons":{},
     "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
-    "area":[["P ",". ",". ",". ",". ",". ",],
+    "letter":{(-1,0):"u",(1,0):"d",(0,-1):"l",(0,1):"r"},
+    "area":[[". ","P ",". ",". ",". ",". ",],
         [". ",". ",". ","O ",". ",". ",],
         [". ","M ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",],
-        [". ",". ",". ",". ",". ",". ",]]}
-
+        [". ",". ",". ",". ",". ",". ",]],}
 
 class Person:
-    def __init__(self, coordinate:list, health:int, inventory:list, equipped:list, name:str,game:dict):
+    def __init__(self, coordinate:list, health:int, inventory:list, equipped:list, name:str,world:dict):
         self.coordinate=coordinate
         self.health=health
         self.inventory=inventory
         self.equipped=equipped
         self.name=name
-        game["Persons"][self.name]=self
+        world["persons"][self.name]=self
     def move(self,area:dict,lenght):
         if self.coordinate[0]+lenght[0]>5:
             return [5,self.coordinate[1]+lenght[1],"Out of bounds"]
@@ -34,13 +36,13 @@ class Person:
             return [self.coordinate[0],self.coordinate[1],"Already occupied"]
         return [self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],""]
     def attack(self, attacked):
-        return attacked.health-ceil((random()*self.equipped[1]+self.equipped[0]-1)/attacked.equipped[2]) 
-    def action(self, game:dict, s:str):
+        return attacked.health-ceil(ceil(random()*self.equipped[1]+self.equipped[0]-1)/attacked.equipped[2]) 
+    def action(self, world:dict, s:str):
         if not s:
             return {"print":"Invalid action"}
         if not s[0] in ["u","d","l","r","a"]:
             return {"print":"Invalid action"}
-        Persons,dir,area,=game.values()
+        persons,dir,letter, area,=world.values()
         if s in ["u","d","l","r"]:
             for i in range(0,self.equipped[3]):
                 t=self.move(area,dir[s])
@@ -57,29 +59,14 @@ class Person:
             name=area[t[0]][t[1]]
             if name in [". ","O "]:
                 return{"print":"No enemy to attack"}
-            u=Persons[name]
+            u=persons[name]
             u.health=self.attack(u)
             if u.health<=0:
                 area[t[0]][t[1]]=". "
-                del Persons[name]
-                return {"del":u,"print":"Enemy killed","area":area,"Persons":Persons}
+                return {"del":name,"print":"Enemy killed","area":area,"persons":persons}
             return{"print":u.health}
-player=Person([0,0],100,[],[1,6,2,1],"P ",world)
+player=Person([0,1],100,[],[1,6,2,1],"P ",world)
 monster=Person([2,1],5,[],[1,4,1.5,1],"M ",world)
-
-#assumes equal len
-def bitwise_add(list1:list, list2:list):
-    res=[]
-    for i in range(0,len(list1)):
-        res.append(list1[i]+list2[i])
-    return res
-
-def generate_board(list:list):
-    board=""
-    for row in list:
-        board+="".join(row)
-        board+="\n"
-    return board
 
 while True:
     print(generate_board(world["area"]))
@@ -88,7 +75,18 @@ while True:
     t=player.action(world,s,)
     print(t.pop("print"))
     if "del" in t:
-        del t["del"]
+        del world["persons"][t["del"]]
     for i in world:
         if i in t:
             world[i]=t[i]
+    for i in list(world["persons"]):
+        if i!="P ":
+            t=world["persons"][i].action(world,monster_movement(world["persons"][i].coordinate,player.coordinate,world["letter"]))
+            for j in world:
+                if j in t:
+                    world[j]=t[j]
+            if t["print"]=="Enemy killed":
+                print("You died")
+                exit
+            if type(t["print"])==int:
+                print(t["print"])
