@@ -3,33 +3,69 @@ from math import ceil
 for i in range(1,101):
     print("")
 world={
+    "Persons":{},
     "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
     "area":[["P ",". ",". ",". ",". ",". ",],
         [". ",". ",". ","O ",". ",". ",],
         [". ","M ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",],
-        [". ",". ",". ",". ",". ",". ",]],
-    "coordinate":{"P ":[0,0],"M ":[2,1]},
-    "health":{"P ":100,"M ":5},
-    "inventory":{"P ":[],"M ":[]},
-    "equipped":{"P ":[1,6,2,1],"M ":[1,4,1.5,1]}}
+        [". ",". ",". ",". ",". ",". ",]]}
 
-def move(lenght:list, who:str, coordinate:dict, area:dict):
-        if coordinate[who][0]+lenght[0]>5:
-            return [5,coordinate[who][1]+lenght[1],"Out of bounds"]
-        if coordinate[who][1]+lenght[1]>5:
-            return [coordinate[who][0]+lenght[0],5,"Out of bounds"]
-        if coordinate[who][0]+lenght[0]<0:
-            return [0,coordinate[who][1]+lenght[1],"Out of bounds"]
-        if coordinate[who][1]+lenght[1]<0:
-            return [coordinate[who][0]+lenght[0],0,"Out of bounds"]
-        if (area[coordinate[who][0]+lenght[0]][coordinate[who][1]+lenght[1]]!=". "):
-            return coordinate[who][0],coordinate[who][1],"Already occupied"
-        return [coordinate[who][0]+lenght[0], coordinate[who][1]+lenght[1],""]
 
-def attack(weapon:list, health:int, armor:int):
-    return health-ceil((random()*weapon[1]+weapon[0]-1)/armor) 
+class Person:
+    def __init__(self, coordinate:list, health:int, inventory:list, equipped:list, name:str,game:dict):
+        self.coordinate=coordinate
+        self.health=health
+        self.inventory=inventory
+        self.equipped=equipped
+        self.name=name
+        game["Persons"][self.name]=self
+    def move(self,area:dict,lenght):
+        if self.coordinate[0]+lenght[0]>5:
+            return [5,self.coordinate[1]+lenght[1],"Out of bounds"]
+        if self.coordinate[1]+lenght[1]>5:
+            return [self.coordinate[0]+lenght[0],5,"Out of bounds"]
+        if self.coordinate[0]+lenght[0]<0:
+            return [0,self.coordinate[1]+lenght[1],"Out of bounds"]
+        if self.coordinate[1]+lenght[1]<0:
+            return [self.coordinate[0]+lenght[0],0,"Out of bounds"]
+        if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=". ":
+            return [self.coordinate[0],self.coordinate[1],"Already occupied"]
+        return [self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],""]
+    def attack(self, attacked):
+        return attacked.health-ceil((random()*self.equipped[1]+self.equipped[0]-1)/attacked.equipped[2]) 
+    def action(self, game:dict, s:str):
+        if not s:
+            return {"print":"Invalid action"}
+        if not s[0] in ["u","d","l","r","a"]:
+            return {"print":"Invalid action"}
+        Persons,dir,area,=game.values()
+        if s in ["u","d","l","r"]:
+            for i in range(0,self.equipped[3]):
+                t=self.move(area,dir[s])
+                area[self.coordinate[0]][self.coordinate[1]]=". "
+                area[t[0]][t[1]]=self.name
+                self.coordinate=[t[0],t[1]]
+            return {"print":t[2],"area":area}
+        elif s[0]=="a":
+            if not len(s)==3:
+                return {"print":"Invalid attack"}
+            if not s[2] in ["u","d","l","r"]:
+                return {"print":"Invalid attack"}
+            t=bitwise_add(self.coordinate, dir[s[2]])
+            name=area[t[0]][t[1]]
+            if name in [". ","O "]:
+                return{"print":"No enemy to attack"}
+            u=Persons[name]
+            u.health=self.attack(u)
+            if u.health<=0:
+                area[t[0]][t[1]]=". "
+                del Persons[name]
+                return {"del":u,"print":"Enemy killed","area":area,"Persons":Persons}
+            return{"print":u.health}
+player=Person([0,0],100,[],[1,6,2,1],"P ",world)
+monster=Person([2,1],5,[],[1,4,1.5,1],"M ",world)
 
 #assumes equal len
 def bitwise_add(list1:list, list2:list):
@@ -45,39 +81,14 @@ def generate_board(list:list):
         board+="\n"
     return board
 
-
-def action(game:dict, s:str,actor:str):
-    dir,area,coordinate,health,inventory,equipped=game.values()
-    if s in ["u","d","l","r"]:
-        for i in range(0,equipped[actor][3]):
-            t=move(dir[s],actor,coordinate,area)
-            area[coordinate[actor][0]][coordinate[actor][1]]=". "
-            area[t[0]][t[1]]=actor
-            coordinate[actor]=[t[0],t[1]]
-            return {"print":t[2],"coordinate":coordinate,"area":area}
-    elif s[0]=="a":
-        t=bitwise_add(coordinate[actor], dir[s[2]])
-        name=area[t[0]][t[1]]
-        if name in [". ","O "]:
-            return{"print":"No enemy to attack"}
-        health[name]=attack(equipped[actor],health[name],equipped[name][2])
-        if health[name]<=0:
-            area[t[0]][t[1]]=". "
-            del coordinate[name]
-            del health[name]
-            del inventory[name]
-            del equipped[name]
-            return {"print":"Enemy killed","area":area,"coordinate":coordinate,"health":health,"inventory":inventory,"equipped":equipped}
-        return{"print":health[name],"health":health}
-    else:
-        return {"print":"Invalid action"}
-
 while True:
     print(generate_board(world["area"]))
     print("Make an action! Move Up, Down, Left, or Right, make an attack, pick up an item on the ground, or make an inventory interaction")
     s=input("u for up, d for down, l for left, r for right, a+the direction you're attacking in(u, d, l, or r) for attack, p for pick up, and i for inventory \n")
-    t=action(world,s,"P ")
+    t=player.action(world,s,)
     print(t.pop("print"))
+    if "del" in t:
+        del t["del"]
     for i in world:
         if i in t:
             world[i]=t[i]
