@@ -10,3 +10,9 @@ def generate_board(list:list):
         board+="".join(row)
         board+="\n"
     return board
+
+def find_dir(number):
+    if number<0:
+        return -1
+    if number>0:
+        return 1

@@ -9,8 +9,8 @@ world={
     "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
     "letter":{(-1,0):"u",(1,0):"d",(0,-1):"l",(0,1):"r"},
     "area":[[". ","P ",". ",". ",". ",". ",],
-        [". ",". ",". ","O ",". ",". ",],
-        [". ","M ",". ",". ",". ",". ",],
+        [". ","O ",". ",". ",". ",". ",],
+        [". ","M ","O ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",]],}
@@ -24,14 +24,8 @@ class Person:
         self.name=name
         world["persons"][self.name]=self
     def move(self,area:dict,lenght):
-        if self.coordinate[0]+lenght[0]>5:
-            return [5,self.coordinate[1]+lenght[1],"Out of bounds"]
-        if self.coordinate[1]+lenght[1]>5:
-            return [self.coordinate[0]+lenght[0],5,"Out of bounds"]
-        if self.coordinate[0]+lenght[0]<0:
-            return [0,self.coordinate[1]+lenght[1],"Out of bounds"]
-        if self.coordinate[1]+lenght[1]<0:
-            return [self.coordinate[0]+lenght[0],0,"Out of bounds"]
+        if 0>self.coordinate[0]+lenght[0]>5 or 0>self.coordinate[1]+lenght[1]>5:
+            return [self.coordinate[0],self.coordinate[1],"Out of bounds"]
         if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=". ":
             return [self.coordinate[0],self.coordinate[1],"Already occupied"]
         return [self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],""]
@@ -40,7 +34,7 @@ class Person:
     def action(self, world:dict, s:str):
         if not s:
             return {"print":"Invalid action"}
-        if not s[0] in ["u","d","l","r","a"]:
+        if not (s in ["u","d","l","r"] or s[0]=="a"):
             return {"print":"Invalid action"}
         persons,dir,letter, area,=world.values()
         if s in ["u","d","l","r"]:
@@ -81,12 +75,12 @@ while True:
             world[i]=t[i]
     for i in list(world["persons"]):
         if i!="P ":
-            t=world["persons"][i].action(world,monster_movement(world["persons"][i].coordinate,player.coordinate,world["letter"]))
+            t=world["persons"][i].action(world,monster_movement(world["persons"][i].coordinate,player.coordinate,world["letter"],world["area"]))
             for j in world:
                 if j in t:
                     world[j]=t[j]
             if t["print"]=="Enemy killed":
                 print("You died")
-                exit
+                exit()
             if type(t["print"])==int:
                 print(t["print"])
