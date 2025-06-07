@@ -1,7 +1,6 @@
-from Mob_ai import monster_movement
 from random import random
 from math import ceil
-from Utility import generate_board, bitwise_add
+from Utility import generate_board, bitwise_add, find_dir
 for i in range(1,101):
     print("")
 world={
@@ -59,8 +58,20 @@ class Person:
                 area[t[0]][t[1]]=". "
                 return {"del":name,"print":"Enemy killed","area":area,"persons":persons}
             return{"print":u.health}
+class NPC(Person):
+    def movement(self,letter:dict, area:list, follow:Person, kill:bool):
+        diff=(follow.coordinate[0]-self.coordinate[0],follow.coordinate[1]-self.coordinate[1])
+        if abs(diff[0])+abs(diff[1])==1 and kill:
+            return "a "+letter[diff]
+        if diff[0] and area[self.coordinate[0]+find_dir(diff[0])][self.coordinate[1]]==". ":
+            return(letter[(find_dir(diff[0]),0)])
+        if area[self.coordinate[0]][self.coordinate[1]+find_dir(diff[1])]==". ":
+            return(letter[(0,find_dir(diff[1]))])
+        if area[self.coordinate[0]][self.coordinate[1]-find_dir(diff[1])]==". ":
+            return(letter[(0,-find_dir(diff[1]))])
+        return(letter[(-find_dir(diff[0]),0)])
 player=Person([0,1],100,[],[1,6,2,1],"P ",world)
-monster=Person([2,1],5,[],[1,4,1.5,1],"M ",world)
+monster=NPC([2,1],5,[],[1,4,1.5,1],"M ",world)
 
 while True:
     print(generate_board(world["area"]))
@@ -75,7 +86,7 @@ while True:
             world[i]=t[i]
     for i in list(world["persons"]):
         if i!="P ":
-            t=world["persons"][i].action(world,monster_movement(world["persons"][i].coordinate,player.coordinate,world["letter"],world["area"]))
+            t=world["persons"][i].action(world,world["persons"][i].movement(world["letter"],world["area"],player,True))
             for j in world:
                 if j in t:
                     world[j]=t[j]
