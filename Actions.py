@@ -23,14 +23,14 @@ class Person:
         self.name=name
         world["persons"][self.name]=self
     def move(self,area:dict,lenght):
-        if 0>self.coordinate[0]+lenght[0]>5 or 0>self.coordinate[1]+lenght[1]>5:
+        if not (0<=self.coordinate[0]+lenght[0]<=5 and 0<=self.coordinate[1]+lenght[1]<=5):
             return [self.coordinate[0],self.coordinate[1],"Out of bounds"]
         if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=". ":
             return [self.coordinate[0],self.coordinate[1],"Already occupied"]
         return [self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],""]
     def attack(self, attacked):
         return attacked.health-ceil(ceil(random()*self.equipped[1]+self.equipped[0]-1)/attacked.equipped[2]) 
-    def action(self, world:dict, s:str):
+    def act(self, world:dict, s:str):
         if not s:
             return {"print":"Invalid action"}
         if not (s in ["u","d","l","r"] or s[0]=="a"):
@@ -39,11 +39,13 @@ class Person:
         if s in ["u","d","l","r"]:
             for i in range(0,self.equipped[3]):
                 t=self.move(area,dir[s])
+                if t[2]:
+                    return {"print":t[2]}
                 area[self.coordinate[0]][self.coordinate[1]]=". "
                 area[t[0]][t[1]]=self.name
                 self.coordinate=[t[0],t[1]]
             return {"print":t[2],"area":area}
-        elif s[0]=="a":
+        if s[0]=="a":
             if not len(s)==3:
                 return {"print":"Invalid attack"}
             if not s[2] in ["u","d","l","r"]:
@@ -77,7 +79,7 @@ while True:
     print(generate_board(world["area"]))
     print("Make an action! Move Up, Down, Left, or Right, make an attack, pick up an item on the ground, or make an inventory interaction")
     s=input("u for up, d for down, l for left, r for right, a+the direction you're attacking in(u, d, l, or r) for attack, p for pick up, and i for inventory \n")
-    t=player.action(world,s,)
+    t=player.act(world,s,)
     print(t.pop("print"))
     if "del" in t:
         del world["persons"][t["del"]]
@@ -86,7 +88,7 @@ while True:
             world[i]=t[i]
     for i in list(world["persons"]):
         if i!="P ":
-            t=world["persons"][i].action(world,world["persons"][i].movement(world["letter"],world["area"],player,True))
+            t=world["persons"][i].act(world,world["persons"][i].movement(world["letter"],world["area"],player,True))
             for j in world:
                 if j in t:
                     world[j]=t[j]
