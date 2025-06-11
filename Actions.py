@@ -3,25 +3,17 @@ from math import ceil
 from Utility import generate_board, bitwise_add, find_dir
 for i in range(1,101):
     print("")
-world={
-    "persons":{},
-    "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
-    "letter":{(-1,0):"u",(1,0):"d",(0,-1):"l",(0,1):"r"},
-    "area":[[". ","P ",". ",". ",". ",". ",],
-        [". ","O ",". ",". ",". ",". ",],
-        [". ",". ","O ",". ",". ",". ",],
-        [". ",". ",". ",". ",". ",". ",],
-        [". ",". ",". ",". ",". ",". ",],
-        [". ",". ",". ",". ",". ",". ",]],}
-
-class Person:
-    def __init__(self, coordinate:list, health:int, inventory:list, equipped:list, name:str):
+class Thing:
+    def __init__(self,coordinate:list,name:str):
         self.coordinate=coordinate
+        self.name=name
+class Person(Thing):
+    def __init__(self, health:int, inventory:list, equipped:list,coordinate:list,name:str):
+        super().__init__(coordinate,name)
         self.health=health
         self.inventory=inventory
         self.equipped=equipped
-        self.name=name
-    def move(self,area:dict,lenght):
+    def move(self,area:list,lenght:list):
         if not (0<=self.coordinate[0]+lenght[0]<=5 and 0<=self.coordinate[1]+lenght[1]<=5):
             return [self.coordinate[0],self.coordinate[1],"Out of bounds"]
         if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=". ":
@@ -60,9 +52,13 @@ class Person:
                 return {"del":name,"print":"Enemy killed","area":area,"persons":persons}
             return{"print":u.health}
 class NPC(Person):
-    def movement(self,letter:dict, area:list, follow:Person, kill:bool):
-        diff=(follow.coordinate[0]-self.coordinate[0],follow.coordinate[1]-self.coordinate[1])
-        if abs(diff[0])+abs(diff[1])==1 and kill:
+    def __init__(self,kill:bool,follow:Person,health:int, inventory:list, equipped:list,coordinate:list,name:str):
+        super().__init__(health, inventory, equipped,coordinate,name)
+        self.kill=kill
+        self.follow=follow
+    def movement(self,letter:dict, area:list):
+        diff=(self.follow.coordinate[0]-self.coordinate[0],self.follow.coordinate[1]-self.coordinate[1])
+        if abs(diff[0])+abs(diff[1])==1 and self.kill:
             return "a "+letter[diff]
         if diff[0] and area[self.coordinate[0]+find_dir(diff[0])][self.coordinate[1]]==". ":
             return(letter[(find_dir(diff[0]),0)])
@@ -71,19 +67,28 @@ class NPC(Person):
         if area[self.coordinate[0]][self.coordinate[1]-find_dir(diff[1])]==". ":
             return(letter[(0,-find_dir(diff[1]))])
         return(letter[(-find_dir(diff[0]),0)])
-world["persons"]["P "]=Person([0,1],100,[],[1,6,2,1],"P ")
-def spawn_npc(coordinate:list, health:int, inventory:list, equipped:list, name:str,world:dict):
-    world["persons"][name]=NPC(coordinate,health,inventory,equipped,name,)
+def spawn_npc(kill:bool,follow:Person,health:int, inventory:list, equipped:list,coordinate:list,name:str,world:dict):
+    world["persons"][name]=NPC(kill,follow,health,inventory,equipped,coordinate,name)
     world["area"][coordinate[0]][coordinate[1]]=name
     return {"persons":world["persons"],"area":world["area"]}
-i=spawn_npc([2,1],5,[],[1,4,1.5,1],"M ",world)
+world={
+    "persons":{"P ":Person([0,1],100,[],[1,6,2,1],"P ")},
+    "dir":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
+    "letter":{(-1,0):"u",(1,0):"d",(0,-1):"l",(0,1):"r"},
+    "area":[[". ","P ",". ",". ",". ",". ",],
+        [". ","W ",". ",". ",". ",". ",],
+        [". ",". ","W ",". ",". ",". ",],
+        [". ",". ",". ",". ",". ",". ",],
+        [". ",". ",". ",". ",". ",". ",],
+        [". ",". ",". ",". ",". ",". ",]],}
+i=spawn_npc(True, world["persons"]["P "],5,[],[1,4,1.5,1],[2,1],"M ",world)
 world["persons"]=i["persons"]
 world["area"]=i["area"]
 while True:
     print(generate_board(world["area"]))
     print("Make an action! Move Up, Down, Left, or Right, make an attack, pick up an item on the ground, or make an inventory interaction")
     s=input("u for up, d for down, l for left, r for right, a+the direction you're attacking in(u, d, l, or r) for attack, p for pick up, and i for inventory \n")
-    t=world["persons"]["P "].act(world,s,)
+    t=world["persons"]["P "].act(world,s)
     print(t.pop("print"))
     if "del" in t:
         del world["persons"][t["del"]]
@@ -92,7 +97,7 @@ while True:
             world[i]=t[i]
     for i in list(world["persons"]):
         if i!="P ":
-            t=world["persons"][i].act(world,world["persons"][i].movement(world["letter"],world["area"],world["persons"]["P "],True))
+            t=world["persons"][i].act(world,world["persons"][i].movement(world["letter"],world["area"]))
             for j in world:
                 if j in t:
                     world[j]=t[j]
