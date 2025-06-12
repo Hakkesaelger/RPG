@@ -1,7 +1,11 @@
-def bitwise_add(list1:list, list2:list):
+def bitwise_add(list1:list, list2:list,add:bool):
     res=[]
-    for i in range(0,len(list1)):
-        res.append(list1[i]+list2[i])
+    if add:
+        for i in range(0,len(list1)):
+            res.append(list1[i]+list2[i])
+    else:
+        for i in range(0,len(list1)):
+            res.append(list1[i]-list2[i])
     return res
 
 def generate_board(list:list):
