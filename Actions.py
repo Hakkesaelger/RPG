@@ -49,7 +49,7 @@ class Person(Thing):
             u.health=self.attack(u)
             if u.health<=0:
                 area[t[0]][t[1]]=". "
-                return {"del":name,"print":"Enemy killed","area":area,"persons":persons}
+                return {"print":"Enemy killed","area":area,"persons":persons}
             return{"print":u.health}
 class NPC(Person):
     def __init__(self,kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,name:str,loot:dict):
@@ -68,11 +68,16 @@ class NPC(Person):
                     return letter[(find_dir(diff[0]),0)]
             if area[self.coordinate[0]][self.coordinate[1]+find_dir(diff[1])]==". ":
                 return letter[(0,find_dir(diff[1]))]
-        if r<0.5:
-            if area[self.coordinate[0]-find_dir(diff[0])][self.coordinate[1]]==". ":
-                return letter[(-find_dir(diff[0]),0)]
+        if diff[0] and area[self.coordinate[0]+find_dir(diff[0])][self.coordinate[1]]==". ":
+            return letter[(find_dir(diff[0]),0)]
+        if diff[1] and area[self.coordinate[0]][self.coordinate[1]+find_dir(diff[0])]==". ":
+            return letter[(0,find_dir(diff[1]))]
+        if r<0.5 and area[self.coordinate[0]-find_dir(diff[0])][self.coordinate[1]]==". ":
+            return letter[(find_dir(-diff[0]),0)]
         if area[self.coordinate[0]][self.coordinate[1]-find_dir(diff[1])]==". ":
-            return letter[(0,-find_dir(diff[1]))]
+            return letter[(0,find_dir(-diff[1]))]
+        if diff[0] and area[self.coordinate[0]+find_dir(diff[0])][self.coordinate[1]]==". ":
+            return letter[(find_dir(diff[0]),0)]
 def spawn_npc(kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,name:str,world:dict,loot:dict):
     world["persons"][name]=NPC(kill,follow,health,inventory,equipped,coordinate,name,loot)
     world["area"][coordinate[0]][coordinate[1]]=name
@@ -96,8 +101,6 @@ while True:
     s=input("u for up, d for down, l for left, r for right, a+the direction you're attacking in(u, d, l, or r) for attack, p for pick up, and i for inventory \n")
     t=world["persons"]["P "].act(world,s)
     print(t.pop("print"))
-    if "del" in t:
-        del world["persons"][t["del"]]
     world.update(t)
     for i in list(world["persons"]):
         if i!="P ":
