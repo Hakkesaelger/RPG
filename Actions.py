@@ -70,7 +70,7 @@ class NPC(Person):
                 return letter[(0,find_dir(diff[1]))]
         if diff[0] and area[self.coordinate[0]+find_dir(diff[0])][self.coordinate[1]]==". ":
             return letter[(find_dir(diff[0]),0)]
-        if diff[1] and area[self.coordinate[0]][self.coordinate[1]+find_dir(diff[0])]==". ":
+        if diff[1] and area[self.coordinate[0]][self.coordinate[1]+find_dir(diff[1])]==". ":
             return letter[(0,find_dir(diff[1]))]
         if r<0.5 and area[self.coordinate[0]-find_dir(diff[0])][self.coordinate[1]]==". ":
             return letter[(find_dir(-diff[0]),0)]
@@ -105,9 +105,10 @@ while True:
     for i in list(world["persons"]):
         if i!="P ":
             t=world["persons"][i].act(world,world["persons"][i].movement(world["letter"],world["area"]))
-            world.update(t)
             if t["print"]=="Enemy killed":
                 print("You died")
                 exit()
             if type(t["print"])==int:
                 print(t["print"])
+            del t["print"]
+            world.update(t)
