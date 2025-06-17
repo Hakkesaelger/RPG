@@ -1,3 +1,4 @@
+from copy import deepcopy,copy
 from random import random
 from math import ceil
 from Utility import generate_board, bitwise_add, find_dir
@@ -24,7 +25,7 @@ class Person(Thing):
             return {"print":"Invalid action"}
         if not (s in ["u","d","l","r"] or s[0]=="a"):
             return {"print":"Invalid action"}
-        persons,direc,letter, area,=world.values()
+        persons,direc, area,=world["persons"],world["direc"],world["area"]
         if s in ["u","d","l","r"]:
             for i in range(0,self.equipped["speed"]):
                 t=self.move(area,direc[s])
@@ -47,7 +48,8 @@ class Person(Thing):
             u.health=self.attack(u)
             if u.health<=0:
                 area[t[0]][t[1]]=". "
-                return {"print":"Enemy killed" if u!="P " else "You died","area":area,"persons":persons}
+                del persons[name]
+                return {"print":"Enemy killed" if name!="P " else "You died","area":area,"persons":persons}
             return{"print":u.health}
 class NPC(Person):
     def __init__(self,kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,name:str,loot:dict):
@@ -67,17 +69,23 @@ class NPC(Person):
                     possible.add(i)
         want={letter[(find_dir(diff[0]),0)],letter[(0,find_dir(diff[1]))]}
         will=list(possible & want)
-        if r<0.5 and len(will)==2:
+        if r>0.5 and len(will)==2:
             return will[1]
         if len(will)>0:
             return will[0]
         will=list(possible)
-        if r<0.5 and len(will)==2:
+        x=0
+        if len(will)==3:
+            x=1
+            if r>2/3:
+                return will[2]
+        if (x==1 and r>1/3) or (r>0.5 and len(will)==2):
             return will[1]
         if len(will)>0:
             return will[0]
 def spawn_npc(kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,name:str,world:dict,loot:dict):
     if world["area"][coordinate[0]][coordinate[1]]==". ":
-        world["persons"][name]=NPC(kill,follow,health,inventory,equipped,coordinate,name,loot)
-        world["area"][coordinate[0]][coordinate[1]]=name
-    return {"persons":world["persons"],"area":world["area"]}
+        persons, area=copy(world["persons"]),deepcopy(world["area"])
+        persons[name]=NPC(kill,follow,health,inventory,equipped,coordinate,name,loot)
+        area[coordinate[0]][coordinate[1]]=name
+    return {"persons":persons,"area":area}
