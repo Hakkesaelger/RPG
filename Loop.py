@@ -1,7 +1,6 @@
-from Actions import Thing,Person,NPC,spawn_npc
+from Actions import Person,spawn_npc
 from Utility import generate_board
-for i in range(1,101):
-    print("")
+print("\n"*100)
 world={
     "persons":{"P ":Person(100,[],{"min_damage":1,"max_damage":6,"armor":2,"speed":1},[0,1],"P ")},
     "direc":{"u":[-1,0],"d":[1,0],"l":[0,-1],"r":[0,1]},
@@ -13,8 +12,9 @@ world={
         [". ",". ",". ",". ",". ",". ",],
         [". ",". ",". ",". ",". ",". ",]],}
 i=spawn_npc(True, world["persons"]["P "],5,[],{"min_damage":1,"max_damage":4,"armor":1.5,"speed":1},[2,1],"M ",world,{100:[]})
-world["persons"]=i["persons"]
-world["area"]=i["area"]
+if i:
+    world["persons"]=i["persons"]
+    world["area"]=i["area"]
 while True:
     print(generate_board(world["area"]))
     print("Make an action! Move Up, Down, Left, or Right, make an attack, pick up an item on the ground, or make an inventory interaction")

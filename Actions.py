@@ -1,7 +1,7 @@
 from copy import deepcopy,copy
 from random import random
 from math import ceil
-from Utility import generate_board, bitwise_add, find_dir
+from Utility import bitwise_add, find_dir
 class Thing:
     def __init__(self,coordinate:list,name:str):
         self.coordinate=coordinate
@@ -41,6 +41,8 @@ class Person(Thing):
             if not s[2] in ["u","d","l","r"]:
                 return {"print":"Invalid attack"}
             t=bitwise_add(self.coordinate, direc[s[2]],True)
+            if not (0<=t[0]<=5 and 0<=t[1]<=5):
+                return({"print":"No enemy to attack"})
             name=area[t[0]][t[1]]
             if not name in persons:
                 return {"print":"No enemy to attack"}
