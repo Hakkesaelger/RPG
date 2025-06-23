@@ -3,7 +3,7 @@ from random import random
 from math import ceil
 from Utility import bitwise_add, find_dir
 class Thing:
-    def __init__(self,coordinate:list,name:str):
+    def __init__(self,coordinate:tuple,name:str):
         self.coordinate=coordinate
         self.name=name
 class Person(Thing):
@@ -12,15 +12,16 @@ class Person(Thing):
         self.health=health
         self.inventory=inventory
         self.equipped=equipped
-    def move(self,area:list,lenght:list):
+    def move(self,area:list,lenght:tuple):
         if not (0<=self.coordinate[0]+lenght[0]<=5 and 0<=self.coordinate[1]+lenght[1]<=5):
-            return [self.coordinate[0],self.coordinate[1],"Out of bounds"]
+            return (self.coordinate[0],self.coordinate[1],"Out of bounds")
         if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=". ":
-            return [self.coordinate[0],self.coordinate[1],"Already occupied"]
-        return [self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],""]
+            return (self.coordinate[0],self.coordinate[1],"Already occupied")
+        return (self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],"")
     def attack(self, attacked):
         return attacked.health-ceil(ceil(random()*self.equipped["max_damage"]+self.equipped["min_damage"]-1)/attacked.equipped["armor"]) 
     def act(self, world:dict, s:str):
+        world=copy(world)
         if not s:
             return {"print":"Invalid action"}
         if not (s in ["u","d","l","r"] or s[0]=="a"):
@@ -33,7 +34,7 @@ class Person(Thing):
                     return {"print":t[2]}
                 area[self.coordinate[0]][self.coordinate[1]]=". "
                 area[t[0]][t[1]]=self.name
-                self.coordinate=[t[0],t[1]]
+                self.coordinate=(t[0],t[1])
             return {"print":t[2],"area":area}
         if s[0]=="a":
             if not len(s)==3:
@@ -46,7 +47,7 @@ class Person(Thing):
             name=area[t[0]][t[1]]
             if not name in persons:
                 return {"print":"No enemy to attack"}
-            u=persons[name]
+            u=persons[name][0]
             u.health=self.attack(u)
             if u.health<=0:
                 area[t[0]][t[1]]=". "
@@ -85,9 +86,13 @@ class NPC(Person):
             return will[1]
         if len(will)>0:
             return will[0]
-def spawn_npc(kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,name:str,world:dict,loot:dict):
+def spawn_npc(kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,display:str,world:dict,loot:dict,name:str):
     if world["area"][coordinate[0]][coordinate[1]]==". ":
         persons, area=copy(world["persons"]),deepcopy(world["area"])
-        persons[name]=NPC(kill,follow,health,inventory,equipped,coordinate,name,loot)
-        area[coordinate[0]][coordinate[1]]=name
+        persons[display]=[NPC(kill,follow,health,inventory,equipped,coordinate,display,loot),name]
+        area[coordinate[0]][coordinate[1]]=display
     return {"persons":persons,"area":area}
+def spawn_item(information:tuple,items:dict,coordinates:tuple,area:list,name:str):
+    area,items=deepcopy(area),copy(items)
+    area[coordinates[0]][coordinates[1]]=name
+    items[name]=information
