@@ -26,7 +26,7 @@ class Person(Thing):
             return {"print":"Invalid action"}
         if not (s in ["u","d","l","r"] or s[0]=="a"):
             return {"print":"Invalid action"}
-        persons,direc, area,=world["persons"],world["direc"],world["area"]
+        persons,direc,area,=world["persons"],world["direc"],world["area"]
         if s in ["u","d","l","r"]:
             for i in range(0,self.equipped["speed"]):
                 t=self.move(area,direc[s])
