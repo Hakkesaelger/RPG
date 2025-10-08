@@ -1,4 +1,4 @@
-def bitwise_add(list1:list, list2:list,add:bool):
+def bitwiseAdd(list1:list, list2:list,add:bool):
     res=[]
     if add:
         for i in range(0,len(list1)):
@@ -8,17 +8,19 @@ def bitwise_add(list1:list, list2:list,add:bool):
             res.append(list1[i]-list2[i])
     return res
 
-def generate_board(list:list):
-    board=""
-    for row in list:
-        board+="".join(row)
-        board+="\n"
-    return board
-
-def find_dir(number):
+def findDir(number):
     if number<0:
         return -1
     if number>0:
         return 1
     if number==0:
         return 0
+
+def findFile(toOpen:str):
+    file=open(toOpen,"r")
+    txt=file.readlines()
+    file.close()
+    return txt
+
+def replace(str, index, rep):
+    return str[:index]+rep+str[index+1:]

@@ -1,7 +1,7 @@
-from copy import deepcopy,copy
+from copy import copy
 from random import random
 from math import ceil
-from Utility import bitwise_add, find_dir
+from Utility import bitwiseAdd, findDir, findFile, replace
 class Thing:
     def __init__(self,coordinate:tuple,name:str):
         self.coordinate=coordinate
@@ -12,10 +12,11 @@ class Person(Thing):
         self.health=health
         self.inventory=inventory
         self.equipped=equipped
-    def move(self,area:list,lenght:tuple):
-        if not (0<=self.coordinate[0]+lenght[0]<=5 and 0<=self.coordinate[1]+lenght[1]<=5):
+    def move(self,lenght:tuple):
+        if not (0<=self.coordinate[0]+lenght[0]<=5 and 0<=self.coordinate[1]+lenght[1]<=12):
             return (self.coordinate[0],self.coordinate[1],"Out of bounds")
-        if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=". ":
+        area=findFile("playArea.txt")
+        if area[self.coordinate[0]+lenght[0]][self.coordinate[1]+lenght[1]]!=".":
             return (self.coordinate[0],self.coordinate[1],"Already occupied")
         return (self.coordinate[0]+lenght[0], self.coordinate[1]+lenght[1],"")
     def attack(self, attacked):
@@ -23,17 +24,17 @@ class Person(Thing):
     def act(self, world:dict, s:str):
         world=copy(world)
         if not s:
-            return {"print":"Invalid action"}
+            return {}
         if not (s in ["u","d","l","r"] or s[0]=="a"):
             return {"print":"Invalid action"}
-        persons,direc,area,=world["persons"],world["direc"],world["area"]
+        persons,direc,area=world["persons"],world["direc"],findFile("playArea.txt")
         if s in ["u","d","l","r"]:
             for i in range(0,self.equipped["speed"]):
-                t=self.move(area,direc[s])
+                t=self.move(direc[s])
                 if t[2]:
                     return {"print":t[2]}
-                area[self.coordinate[0]][self.coordinate[1]]=". "
-                area[t[0]][t[1]]=self.name
+                area[self.coordinate[0]]=replace(area[self.coordinate[0]],self.coordinate[1],".")
+                area[t[0]]=replace(area[t[0]],t[1],self.name)
                 self.coordinate=(t[0],t[1])
             return {"print":t[2],"area":area}
         if s[0]=="a":
@@ -41,8 +42,8 @@ class Person(Thing):
                 return {"print":"Invalid attack"}
             if not s[2] in ["u","d","l","r"]:
                 return {"print":"Invalid attack"}
-            t=bitwise_add(self.coordinate, direc[s[2]],True)
-            if not (0<=t[0]<=5 and 0<=t[1]<=5):
+            t=bitwiseAdd(self.coordinate, direc[s[2]],True)
+            if not (0<=t[0]<=5 and 0<=t[1]<=12):
                 return({"print":"No enemy to attack"})
             name=area[t[0]][t[1]]
             if not name in persons:
@@ -50,9 +51,9 @@ class Person(Thing):
             u=persons[name][0]
             u.health=self.attack(u)
             if u.health<=0:
-                area[t[0]][t[1]]=". "
+                area[t[0]][t[1]]="."
                 del persons[name]
-                return {"print":"Enemy killed" if name!="P " else "You died","area":area,"persons":persons}
+                return {"print":"Enemy killed" if name!="P" else "You died","area":area,"persons":persons}
             return{"print":u.health}
 class NPC(Person):
     def __init__(self,kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,name:str,loot:dict):
@@ -60,17 +61,18 @@ class NPC(Person):
         self.kill=kill
         self.follow=follow
         self.loot=loot
-    def movement(self,letter:dict, area:list,direc:dict):
-        diff=bitwise_add(self.follow.coordinate,self.coordinate,False)
+    def movement(self,letter:dict, direc:dict):
+        area=findFile("playArea.txt")
+        diff=bitwiseAdd(self.follow.coordinate,self.coordinate,False)
         if abs(diff[0])+abs(diff[1])==1 and self.kill:
             return "a "+letter[tuple(diff)]
         r=random()
         possible=set()
         for i in direc.keys():
-            if 0<=self.coordinate[0]+direc[i][0]<=5 and 0<=self.coordinate[1]+direc[i][1]<=5:
-                if area[self.coordinate[0]+direc[i][0]][self.coordinate[1]+direc[i][1]]==". ":
+            if 0<=self.coordinate[0]+direc[i][0]<=5 and 0<=self.coordinate[1]+direc[i][1]<=12:
+                if area[self.coordinate[0]+direc[i][0]][self.coordinate[1]+direc[i][1]]==".":
                     possible.add(i)
-        want={letter[(find_dir(diff[0]),0)],letter[(0,find_dir(diff[1]))]}
+        want={letter[(findDir(diff[0]),0)],letter[(0,2*findDir(diff[1]))]}
         will=list(possible & want)
         if r>0.5 and len(will)==2:
             return will[1]
@@ -86,13 +88,10 @@ class NPC(Person):
             return will[1]
         if len(will)>0:
             return will[0]
-def spawn_npc(kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,display:str,world:dict,loot:dict,name:str):
-    if world["area"][coordinate[0]][coordinate[1]]==". ":
-        persons, area=copy(world["persons"]),deepcopy(world["area"])
+def spawnNpc(kill:bool,follow:Person,health:int, inventory:list, equipped:dict,coordinate:list,display:str,world:dict,loot:dict,name:str):
+    area=findFile("playArea.txt")
+    persons=copy(world["persons"])
+    if area[coordinate[0]][coordinate[1]]==".":
         persons[display]=[NPC(kill,follow,health,inventory,equipped,coordinate,display,loot),name]
-        area[coordinate[0]][coordinate[1]]=display
+        area[coordinate[0]]=replace(area[coordinate[0]],coordinate[1],display)
     return {"persons":persons,"area":area}
-def spawn_item(information:tuple,items:dict,coordinates:tuple,area:list,name:str):
-    area,items=deepcopy(area),copy(items)
-    area[coordinates[0]][coordinates[1]]=name
-    items[name]=information
